@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Place searches</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script src="cafes.js"></script>
+    <script>
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      var map;
+      var infowindow;
+      var service;
+
+      function initMap() {
+        var seattle = {lat: 47.6062, lng: -122.3321};
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: seattle,
+          zoom: 12,
+          styles: [
+              {
+                  stylers: [{ visibility: 'simplified' }]
+              }, 
+              {
+                  elementType: 'labels',
+                  stylers: [{ visibility: 'off' }]
+              }
+          ]
+        });
+
+        infowindow = new google.maps.InfoWindow();
+        service = new google.maps.places.PlacesService(map);
+
+        map.addListener('idle', search);
+
+        for (var cafe_id in cafes) {
+            createMarker(cafes[cafe_id]);
+        }
+      }
+
+      function search() {
+          service.radarSearch(
+              {
+                  bounds: map.getBounds(),
+                  type: 'cafe',
+                  keyword: 'coffee'
+              }, callback
+          )
+      }
+
+      function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          for (var i = 0; i < results.length; i++) {
+            cafes[results[i]["place_id"]] = results[i];
+            createMarker(results[i]);
+          }
+        }
+      }
+
+      function createMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location,
+          icon: {
+              url: 'https://developers.google.com/maps/documentation/javascript/images/circle.png',
+              anchor: new google.maps.Point(10, 10),
+              scaledSize: new google.maps.Size(10, 17)
+          }
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+            service.getDetails(
+                place, function(result, status) {
+                    if (status !== google.maps.places.PlacesServiceStatus.OK) {
+                        console.error(status);
+                        return;
+                    }
+                    infowindow.setContent(result.name);
+                    infowindow.open(map, marker);
+                }
+            );
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuqCRiC1Ftr5FdzO2rN7yaVwrTTO6aJJc&libraries=places&callback=initMap" async defer></script>
+  </body>
+</html>
