@@ -1,1 +1,1 @@
-# seattle-coffe-index
+# seattle-coffee-index
